@@ -1,6 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Creating a IAM role
-
+Description: Creating an IAM role
 Resources:
   TestDBRole:
     Type: AWS::IAM::Role
@@ -14,7 +13,6 @@ Resources:
                 - !Sub "arn:aws:iam::${AWS::AccountId}:root"
             Action:
               - "sts:AssumeRole"
-
       Description: TestDB Role
       ManagedPolicyArns:
         - !ImportValue CreateTestDBPolicy
