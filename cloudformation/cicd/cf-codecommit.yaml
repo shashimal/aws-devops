@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creating a CodeComit repository
+Parameters:
+  RepositoryName:
+    Description: Repository Name
+    Type: String
+    AllowedPattern: "[a-zA-Z0-9]+"
+Resources:
+  BudgetManagerRepository:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryDescription: Budget Manager CodeCommit repository
+      RepositoryName: !Ref RepositoryName
+Outputs:
+  BudgetManagerCodeCommitArn:
+    Description: BudgetManager repository ARN
+    Value: !GetAtt BudgetManagerRepository.Arn
+    Export:
+      Name: BudgetManagerCodeCommitArn
