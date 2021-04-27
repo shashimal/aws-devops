@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "Deploying an EC2 Instance"
+Parameters:
+  Environment:
+    Description: "Environment"
+    Type: String
+    Default: "Devlopment"
+  InstanceType:
+    Description: "InstaceType"
+    Type: String
+    Default: "t2.micro"
+  KeyName:
+    Description: "SSH Key"
+    Type: AWS::EC2::KeyPair::KeyName
+  ImageId:
+    Description: "Image Id"
+    Type: AWS::EC2::Image::Id
+Resources:
+  EC2WebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      IamInstanceProfile: !Ref S3InstanceProfile
+      SecurityGroups:
+        - !Ref SSHSecuirtyGruop
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Environment
+        - Key: "Name"
+          Value: "Web Server"
+
+  SSHSecuirtyGruop:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: SshSG
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          CidrIp: 0.0.0.0/0
+          FromPort: 22
+          ToPort: 22
+
+  WEBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: WEBSecurityGroup
+      GroupDescription: Enable HTTP access via port 80
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          CidrIp: 0.0.0.0/0
+          FromPort: 80
+          ToPort: 80
+
+  S3InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref EC2S3Role
+
+  EC2S3Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Description: S3FullAccessForEC2Instance
+      Path: "/"
+      RoleName: S3FullAccessForEC2Instance
+
+  RolePolicies:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: "Ec2AccessPolicy"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "*"
+            Resource: "*"
+      Roles:
+        - Ref: "EC2S3Role"
+
+Outputs:
+  EC2DnsName:
+    Description: Public DNS name of this EC2
+    Value: !GetAtt EC2WebServer.PublicDnsName
+    Export:
+      Name: EC2DnsName
