@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creating a IAM role
+
+Resources:
+  TestDBRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "sts:AssumeRole"
+
+      Description: TestDB Role
+      ManagedPolicyArns:
+        - !ImportValue CreateTestDBPolicy
+      Path: "/"
+
+Outputs:
+  TestDBRole:
+    Description: TestDBRole
+    Value: !GetAtt TestDBRole.Arn
+    Export:
+      Name: TestDBRole
