@@ -24,3 +24,8 @@ Outputs:
     Value: !GetAtt TestDBRole.Arn
     Export:
       Name: TestDBRole
+  TestDBRoleDescription:
+    Description: TestDBRole description
+    Value: !Sub "${AWS::StackName}"
+    Export:
+      Name: TestDBRoleDescription
