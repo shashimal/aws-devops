@@ -1,12 +1,14 @@
 AWSTemplateFormatVersion: 2010-09-09
+
 Description: "Deploying an EC2 Instance"
+
 Parameters:
   Environment:
     Description: "Environment"
     Type: String
     Default: "Devlopment"
   InstanceType:
-    Description: "InstaceType"
+    Description: "InstanceType"
     Type: String
     Default: "t2.micro"
   KeyName:
@@ -15,6 +17,7 @@ Parameters:
   ImageId:
     Description: "Image Id"
     Type: AWS::EC2::Image::Id
+
 Resources:
   EC2WebServer:
     Type: AWS::EC2::Instance

@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: ---
+Metadata: 
+
+Parameters: 
+
+Mappings: 
+
+Conditions: 
+
+Resources: 
+LogicalID:
+  Type: AWS::CodeBuild::Project
+  Properties:
+    Artifacts: #required
+      Artifacts
+    BadgeEnabled: Boolean
+    BuildBatchConfig:
+      ProjectBuildBatchConfig
+    Cache:
+      ProjectCache
+    ConcurrentBuildLimit: Integer
+    Description: String
+    EncryptionKey: String
+    Environment: #required
+      Environment
+    FileSystemLocations:
+      - ProjectFileSystemLocation
+    LogsConfig:
+      LogsConfig
+    Name: String
+    QueuedTimeoutInMinutes: Integer
+    SecondaryArtifacts:
+      - Artifacts
+    SecondarySourceVersions:
+      - ProjectSourceVersion
+    SecondarySources:
+      - Source
+    ServiceRole: String #required
+    Source: #required
+    
+    SourceVersion: String
+    Tags:
+      - Tag
+    TimeoutInMinutes: Integer
+    Triggers:
+      ProjectTriggers
+    VpcConfig:
+      VpcConfig
+
+
+Outputs:
