@@ -61,16 +61,81 @@ Resources:
         - Key: Name
           Value: !Ref ClusterName
 
-  EcsService:
+  EcsWebappService:
     Type: AWS::ECS::Service
-    DependsOn: EcsCluster
     Properties:
-      ServiceName: webapp-service
       Cluster: !Ref EcsCluster
       DesiredCount: 2
       LaunchType: EC2
+      LoadBalancers:
+      - ContainerName: web-app
+        ContainerPort: 80
+        TargetGroupArn: !Ref 'EcsTargetGroup'
+      Role: !Ref 'ECSServiceRole'
       TaskDefinition: !Ref EcsTaskDefinition
-  
+
+  EcsAlb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: Ecs-Alb
+      Scheme: internet-facing
+      LoadBalancerAttributes:
+       - Key: idle_timeout.timeout_seconds
+         Value: '30'
+      SecurityGroups: [!Ref 'EcsAlbSecurityGroup']
+      Subnets: !Ref 'SubnetId'
+
+  EcsAlbListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn: ECSServiceRole
+    Properties:
+      DefaultActions: #required
+        - Type: forward
+          TargetGroupArn: !Ref 'EcsTargetGroup'
+      LoadBalancerArn: !Ref EcsAlb #required
+      Port: 80
+      Protocol: HTTP
+
+  EcsTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: EcsAlb
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Name: EcsTargetGroup
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 2
+      VpcId: !Ref 'VpcId'
+
+  ECSALBListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    DependsOn: EcsAlbListener
+    Properties:
+      Actions:
+      - Type: forward
+        TargetGroupArn: !Ref 'EcsTargetGroup'
+      Conditions:
+      - Field: path-pattern
+        Values: [/]
+      ListenerArn: !Ref 'EcsAlbListener'
+      Priority: 1
+
+  EcsAlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: String #required
+      GroupName: String
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      VpcId: !Ref VpcId
+
   EcsTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -142,6 +207,15 @@ Resources:
       FromPort: 22
       ToPort: 22
   
+  EcsSecurityGroupALBports:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref 'EcsSecurityGroup'
+      IpProtocol: tcp
+      FromPort: '31000'
+      ToPort: '61000'
+      SourceSecurityGroupId: !Ref 'EcsAlbSecurityGroup'
+
   EC2InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
@@ -167,6 +241,27 @@ Resources:
               'ecs:Poll', 'ecs:RegisterContainerInstance', 'ecs:StartTelemetrySession',
               'ecs:Submit*', 'logs:CreateLogStream', 'logs:PutLogEvents']
             Resource: '*'
+
+  ECSServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ecs.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+      - PolicyName: ecs-service
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action: ['elasticloadbalancing:DeregisterInstancesFromLoadBalancer', 'elasticloadbalancing:DeregisterTargets',
+              'elasticloadbalancing:Describe*', 'elasticloadbalancing:RegisterInstancesWithLoadBalancer',
+              'elasticloadbalancing:RegisterTargets', 'ec2:Describe*', 'ec2:AuthorizeSecurityGroupIngress']
+            Resource: '*'
+
 Outputs:
   EcsCluster:
     Description: "Cluster name"
