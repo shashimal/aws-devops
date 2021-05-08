@@ -61,6 +61,31 @@ Resources:
         - Key: Name
           Value: !Ref ClusterName
 
+  EcsService:
+    Type: AWS::ECS::Service
+    DependsOn: EcsCluster
+    Properties:
+      ServiceName: webapp-service
+      Cluster: !Ref EcsCluster
+      DesiredCount: 2
+      LaunchType: EC2
+      TaskDefinition: !Ref EcsTaskDefinition
+  
+  EcsTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Name: "web-app"
+          Image: httpd:2.4
+          Memory: '300'
+          PortMappings:
+            - ContainerPort: 80
+              HostPort: 80
+      Cpu: 300
+      Memory: 300
+      Family: !Join ['', [!Ref 'AWS::StackName', -ecs-web-app]]
+      NetworkMode: bridge
+
   EcsAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
